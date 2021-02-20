@@ -1,0 +1,1 @@
+../../res/cl/algo/reduce.cl

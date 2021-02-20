@@ -1,0 +1,45 @@
+#include <random>
+#include <iostream>
+#include <chrono>
+#include <limits>
+#include <iomanip>
+
+#include "opencl/DefaultRuntime.hpp"
+#include "algo/MinMax.hpp"
+#include "algo/Reducer.hpp"
+
+namespace wo = worldgen::opencl;
+namespace wa = worldgen::algo;
+
+int main(void)
+{
+    wo::DefaultRuntime drt;
+    wa::MinMax reducer{drt};
+
+    std::vector<double> data(1024 * 1024, 0.);
+
+    std::mt19937 g(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    std::uniform_real_distribution d_r{-1., 1.};
+
+    double min_cpu = std::numeric_limits<double>::max();
+    double max_cpu = std::numeric_limits<double>::min();
+
+    for (auto &v : data) {
+        v = d_r(g);
+        min_cpu = min_cpu < v ? min_cpu : v;
+        max_cpu = max_cpu > v ? max_cpu : v;
+    }
+
+    auto [min_gpu, max_gpu] = reducer.reduce(data);
+
+    std::cout << std::setprecision(std::numeric_limits<double>::digits10 +1);
+    std::cout << "Result" << std::endl;
+    std::cout << "CPU:" << std::endl;
+    std::cout << "\tmin = " << min_cpu << std::endl;
+    std::cout << "\tmax = " << max_cpu << std::endl;
+    std::cout << "GPU:" << std::endl;
+    std::cout << "\tmin = " << min_gpu << std::endl;
+    std::cout << "\tmax = " << max_gpu << std::endl;
+
+    return 0;
+}
