@@ -1,8 +1,7 @@
 typedef struct {
-    unsigned octave;
-    double persistence;
-    double lacunarity;
-    int normalize;
+    double weight;
+    double freq;
+    double amp;
 } par_t;
 
 double2 smooth(double2 p) {
@@ -53,26 +52,20 @@ kernel void perlin2D(double2 scale, double2 offset, constant int const *perm, co
 
 kernel void fracPerlin2D(par_t param, double2 scale, double2 offset, constant int const *perm, constant double2 const *grad, global double *out) {
     double res = 0;
-    double amp = 1;
-    double freq = 1;
-    double weight = 0;
+    double weight = param.weight;
+    double amp = param.amp;
+    double freq = param.freq;
 
     double2 p = ((double2)(get_global_id(0), get_global_id(1)) + offset) * scale;
-    double2 pmax = ((double2)(get_global_size(0) - 1, get_global_size(1) - 1) + offset) * scale;
 
-    for (int i = 0; i < param.octave; ++i) {
-        weight += amp;
-        res += _perlin2D(p * freq, perm, grad) * amp;
+    /*for (int i = 0; i < param.octave; ++i) {*/
+        /*weight += amp;*/
+        /*res += _perlin2D(p * freq, perm, grad) * amp;*/
+    res = _perlin2D(p * freq, perm, grad) * amp;
 
-        if (get_global_id(0) == 0 && get_global_id(1) == 0) {
-            printf("amp = %f freq = %f\n", amp, freq);
-            printf("p = {\n%f\n%f}\n\n", p[0] * freq, p[1] * freq);
-            printf("pmax = {\n%f\n%f}\n\n", pmax[0] * freq, pmax[1] * freq);
-        }
+        /*amp *= param.persistence;*/
+        /*freq *= param.lacunarity;*/
+    /*}*/
 
-        amp *= param.persistence;
-        freq *= param.lacunarity;
-    }
-
-    out[get_global_id(0) + get_global_id(1) * get_global_size(0)] = res / weight;
+    out[get_global_id(0) + get_global_id(1) * get_global_size(0)] += res / weight;
 }
